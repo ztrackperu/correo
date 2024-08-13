@@ -42,6 +42,12 @@ class CorreoModel{
         return $consult->fetch(PDO::FETCH_ASSOC);
 
     }
+    public function estado_dispositivo_salog($telemetria_id )
+    {
+        $consult = $this->pdo->prepare("SELECT * FROM control_dispositivos WHERE estado_control=2 and telemetria_id = ? ");
+        $consult->execute([$telemetria_id]);
+        return $consult->fetch(PDO::FETCH_ASSOC);
+    }
 
     public function excel_1($fechaFin,$telemetria_id)
     {
@@ -281,6 +287,161 @@ class CorreoModel{
 
     }
 
+
+
+
+
+    public function envio_correo_salog($fechaFin,$telemetria_id,$codigo_alarma)
+    {     
+        $mail = new PHPMailer(true);
+        $mensaje = "";
+        $fechaZ =date("Y-m-d_H-i-s"); 
+        $correoEnvio ="ztrack@zgroup.com.pe"; 
+        //lista de correos
+        $correoEnvio1 ="fjorge@salog.pe";
+        $correoEnvio2 ="mdiestra@salog.com.pe";
+        $correoEnvio3 ="mceron@salog.com.pe";
+        $correoEnvio4 ="rcaceres@salog.com.pe";
+        $correoEnvio5 ="rconde@salutare.pe";
+        $correoEnvio6 ="kvera@salutare.com.pe";
+        $correoEnvio7 ="pvasquez@salog.pe";
+        $correoEnvio8 ="centrocontrol@salog.com.pe";
+        $correoEnvio9 ="jtaquila@salutare.com.pe";
+        $correoEnvio10 ="ti.sitrad@salog.com.pe";
+        $correoEnvio11 ="alarrauri@salutare.com.pe";
+        $correoEnvio12 ="jzevallos@salutare.pe";
+        $correoEnvio13 ="alazaro@salutare.pe";
+        $correoEnvio14 ="ylopez@salutare.pe";
+        $correoEnvio15 ="jtinoco@salutare.pe";
+        //Estamos en el tipos de reefer
+        $detalle_alarma =$this->ver_detalle_alarma($codigo_alarma);
+        $detalle_estado =$this->estado_dispositivo_salog($telemetria_id);
+        $dataDispositivo =$this->consultarDispositivo($telemetria_id);
+        
+        $nombreContenedor = $dataDispositivo['nombre_contenedor'];
+
+        $tituloExcel =$nombreContenedor." Últimas 12 horas ";
+       // $reporte = $this->excel_1($fechaFin,$telemetria_id);
+
+        $documento = new Spreadsheet();
+        $documento
+        ->getProperties()
+        ->setCreator("Luis Pablo Marcelo Perea")
+        ->setLastModifiedBy('ZGROUP')
+        ->setTitle($tituloExcel)
+        ->setDescription('Detalles del comportamiento del reefer');
+        $hojaDeProductos = $documento->getActiveSheet();
+        $hojaDeProductos->setTitle("Reefer");
+        # Encabezado de los productos
+        
+        $dispositivo = ["Reefer :" ,$nombreContenedor];
+        $encabezado = ["Reception Date", "Set Point", "Temp Supply", "Return Air", "Evaporation Coil","Ambient Air","Relative Humidity","Power State","Defrost Term Temp","Defrost Interval"];
+        # El último argumento es por defecto A1
+        $hojaDeProductos->fromArray($dispositivo, null, 'A1');
+        $hojaDeProductos->fromArray($encabezado, null, 'A2');
+        # Comenzamos en la fila 3
+        $numeroDeFila = 3;
+        $mensaje .="
+                 <head>
+                    <style>
+                        table {
+                            border-collapse: collapse;
+                            margin: 25px 0; 
+                            font-size: 1em;
+                            font-family: sans-serif;
+                            min-width: 1450px; 
+                            box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+                        }
+                        thead tr {
+                            background-color: #1a2c4e;
+                            color: #ffffff;
+                            text-align: middle;
+                        }
+                        th, td {
+                            padding: 12px 15px;
+                        }      
+                        tbody tr{
+                            border-bottom: 1px solid #1a2c4e;
+                        }      
+                    </style>   
+                </head>
+        ";
+        //Aspectos para el envio de correo
+        $cliente = $dataDispositivo['descripcionC'];
+        $mensaje_alarma= $detalle_alarma['mensaje'];
+
+        $concidencia1 = strpos($mensaje_alarma,"CONEXION");
+        $concidencia2 = strpos($mensaje_alarma,"APAGADO");
+
+        if($concidencia1==true){
+            $inicioApagado = $detalle_estado['ultimo_dato'];
+
+        }elseif ($concidencia2==true){
+            $inicioApagado = $detalle_estado['estado_on'];
+        }else{
+            $inicioApagado = $detalle_estado['temp_ok'];
+        }
+
+        $asunto = "URGENTE ,Alarma  en  ".$nombreContenedor." - " .$cliente."  dia : ".$fechaFin;
+        $mensaje .= "<h2> Señores : SALOG CENTRAL </h2>";
+        $mensaje .= "<h2> Dispositivo : ".$nombreContenedor."</h2>";
+        $mensaje .= "<h2> Referencia : ".$cliente."</h2>";
+        $mensaje .= "<h2> Mensaje : ".$mensaje_alarma."</h2>";
+        $mensaje .= "<h2> Desde : ".$inicioApagado."</h2>";
+        $mensaje .= "<h2>* Último estado recibido  : </h2>";
+        $mensaje .="<body><table  style='border:1px solid #1a2c4e' ><thead><tr ><th width='130'>Reception Date</th><th width='60'>Set Point </th><th > Temp Supply </th><th>Return Air </th><th>Evaporation Coil </th>";
+        $mensaje .=" </tr></thead><tbody>";
+        
+        $mensaje .="<tr align='center' ><td width='130'><strong>".$dataDispositivo['ultima_fecha']."</strong></td><td>".$dataDispositivo['set_point']." C°</td></td>".$dataDispositivo['temp_supply_1']." C°</td><td>".$dataDispositivo['return_air']." C°</td></td>".$dataDispositivo['evaporation_coil']." C°</td>";
+        $mensaje .="</tr>";
+           
+        $mensaje .="</tbody></table></body>";
+        $mensaje .= "<h3>Temperatura Ambiente : ".$dataDispositivo['ambient_air']." C°</h3>";
+        $mensaje .= "<h3>Humedad Relativa: ".$dataDispositivo['relative_humidity']." %</h3>";
+        if($dataDispositivo['power_state']==1){
+            $epa="ENCENDIDO";
+        }else{
+            $epa="APAGADO";
+        }
+        $mensaje .= "<h3>Estado : ".$epa."</h3>";
+        try {
+            //Server settings
+            $mail->SMTPDebug = SMTP::DEBUG_SERVER;                      //Enable verbose debug output
+            $mail->isSMTP();    
+           // $mail->From = "ztrack@zgroup.com.pe"; 
+            $mail->From = "devpablito2023@gmail.com";                                   //Send using SMTP
+            $mail->Host       = "smtp.gmail.com";                   //Set the SMTP server to send through
+            $mail->SMTPAuth   = true;                                   //Enable SMTP authentication
+            $mail->Username   = 'devpablito2023@gmail.com';                     //SMTP username
+            $mail->Password   = 'fdcjahqtohijkkoc';                               //SMTP password
+            //$mail->Username   = 'ztrack@zgroup.com.pe';                     //SMTP username
+            //$mail->Password   = 'Proyectoztrack2023!';
+                               //SMTP password
+            $mail->SMTPSecure = 'tls';            //Enable implicit TLS encryption
+            $mail->Port       = 587;                                    //TCP port to connect to; use 587 if you have set `SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS`
+            //Agregar destinatario
+            $mail->AddAddress($correoEnvio);
+            //$mail->AddAddress($correoEnvio1);
+            //$mail->AddAddress($correoEnvio2);
+            //$mail->AddAddress($correoEnvio3);
+            //$mail->AddAddress($correoEnvio4);
+            //$mail->AddAddress($correoEnvio5);
+            //$mail->Subject = utf8_decode($asunto);
+            //$mail->Body =utf8_decode($mensaje);
+            $mail->isHTML(true);
+            //$mail->AddAttachment('./excel/'.$nombreContenedor.'_'.$fechaZ.'.xlsx', $nombreContenedor.'_'.$fechaZ.'.xlsx');
+            //Avisar si fue enviado o no y dirigir al index
+            if ($mail->Send()) {
+                echo'<script type="text/javascript">alert("Enviado Correctamente");</script>';  
+            } else {
+               echo'<script type="text/javascript">alert("NO ENVIADO, intentar de nuevo");</script>';
+            }    
+        }catch (Exception $e) {
+            echo "Se ha producido un mensaje de error . Mailer Error: {$mail->ErrorInfo}"; 
+        }
+
+
+    }
   
 }
 
