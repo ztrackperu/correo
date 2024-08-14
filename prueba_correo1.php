@@ -421,11 +421,21 @@ class CorreoModel{
             $mail->Port       = 587;                                    //TCP port to connect to; use 587 if you have set `SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS`
             //Agregar destinatario
             $mail->AddAddress($correoEnvio);
-            //$mail->AddAddress($correoEnvio1);
-            //$mail->AddAddress($correoEnvio2);
-            //$mail->AddAddress($correoEnvio3);
-            //$mail->AddAddress($correoEnvio4);
-            //$mail->AddAddress($correoEnvio5);
+            $mail->AddAddress($correoEnvio1);
+            $mail->AddAddress($correoEnvio2);
+            $mail->AddAddress($correoEnvio3);
+            $mail->AddAddress($correoEnvio4);
+            $mail->AddAddress($correoEnvio5);
+            $mail->AddAddress($correoEnvio6);
+            $mail->AddAddress($correoEnvio7);
+            $mail->AddAddress($correoEnvio8);
+            $mail->AddAddress($correoEnvio9);
+            $mail->AddAddress($correoEnvio10);
+            $mail->AddAddress($correoEnvio11);
+            $mail->AddAddress($correoEnvio12);
+            $mail->AddAddress($correoEnvio13);
+            $mail->AddAddress($correoEnvio14);
+            $mail->AddAddress($correoEnvio15);
             $mail->Subject = utf8_decode($asunto);
             $mail->Body =utf8_decode($mensaje);
             $mail->isHTML(true);
