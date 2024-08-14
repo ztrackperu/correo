@@ -426,8 +426,8 @@ class CorreoModel{
             //$mail->AddAddress($correoEnvio3);
             //$mail->AddAddress($correoEnvio4);
             //$mail->AddAddress($correoEnvio5);
-            //$mail->Subject = utf8_decode($asunto);
-            //$mail->Body =utf8_decode($mensaje);
+            $mail->Subject = utf8_decode($asunto);
+            $mail->Body =utf8_decode($mensaje);
             $mail->isHTML(true);
             //$mail->AddAttachment('./excel/'.$nombreContenedor.'_'.$fechaZ.'.xlsx', $nombreContenedor.'_'.$fechaZ.'.xlsx');
             //Avisar si fue enviado o no y dirigir al index
